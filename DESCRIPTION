@@ -1,0 +1,10 @@
+Package: ABACUS
+Type: Package
+Title: Automatic BAyesian Changepoints Under Sparsity
+Version: 1.0
+Date: 2018-09-19
+Author: Wenyu Zhang, Daniel Gilbert
+Description: Code implementing change detection procedure in paper ABACUS: Unsupervised Multivariate Change Detection via Bayesian Source Separation. ABACUS is a Bayesian source separation technique to recover latent signals while locating additive outliers and level shifts in the unsupervised setting.
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.16)
+LinkingTo: Rcpp, RcppArmadillo

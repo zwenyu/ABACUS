@@ -1,0 +1,5 @@
+useDynLib(ABACUS, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")
+export(bsscpt)
+export(prettycpt)
