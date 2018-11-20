@@ -82,5 +82,5 @@ simData = function(P, N, s_s, t0_s, t1_s, sps = FALSE, times = NULL){
   Y = M_s%*%t(S_s) + E_s
   
   return(list(Y = Y, M = M_s, S = S_s, times0 = times0, times1 = times1,   
-              T0 = M_s%*%t(S_s), P0 = rowvars_s))
+              T0 = M_s%*%t(S_s), psi = rowvars_s))
 }
