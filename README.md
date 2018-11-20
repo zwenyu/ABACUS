@@ -16,7 +16,7 @@ dat$times1
 # true model components
 dat$Y # observations matrix
 dat$M # mixing matrix
-dat$S # latent matrix
+t(dat$S) # latent matrix
 dat$psi # noise variance
 
 # run proposed method at K = 5
@@ -26,7 +26,7 @@ res$cpt0
 res$cpt1
 # estimated model components
 res$Mest
-res$Sest
+t(res$Sest)
 res$psiest
 ```
 
