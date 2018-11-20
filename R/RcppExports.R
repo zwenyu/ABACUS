@@ -2,9 +2,9 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 CptC <- function(Y, K, d, numiter, a_psi, b_psi) {
-    .Call(`_BssCpt_CptC`, Y, K, d, numiter, a_psi, b_psi)
+    .Call(`_ABACUS_CptC`, Y, K, d, numiter, a_psi, b_psi)
 }
 
 CptCinit <- function(Y, K, numiter, a_psi, b_psi, init = NULL, useInit = FALSE) {
-    .Call(`_BssCpt_CptCinit`, Y, K, numiter, a_psi, b_psi, init, useInit)
+    .Call(`_ABACUS_CptCinit`, Y, K, numiter, a_psi, b_psi, init, useInit)
 }
