@@ -16,6 +16,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
   int N = Y.n_cols;
   
   // make helper variables
+
   double sum1;
   double sum2;
   mat L(K,K);
@@ -36,7 +37,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
   Ei.zeros();
   
   // Make and Initialize variables
-  
   
   vec tau0(numiter);
   vec tau1(numiter);
@@ -82,7 +82,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
   V1.slice(0).zeros();
   psi.col(0).ones();
   
-  
   // Make difference operator
   
   mat D0(N,N);
@@ -93,7 +92,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
   vec subdiag(N-1);
   subdiag.fill(-1);
   D1.diag(-1) = subdiag;
-  // D1 = D1 + diagmat(subdiag,-1);
 
   mat D1inv = D1.i();
   
@@ -128,8 +126,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
     psi.col(0) = as<vec>(init["psi"]);
   }
   
-  
-  
   // Iterate
   
   for(int g = 0; g < numiter - 1; g++){
@@ -151,7 +147,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
     // Fit tau
     
       // Fit tau0
-      
     sum1 = 0;
     for(int i = 0; i < p; i++){
       for(int j = 0; j < K; j++){
@@ -199,6 +194,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       }
       lam0(k,g+1) = 1.0/R::rgamma((1+p+N)/2, 1.0/(1.0/v0(k,g+1) + sum1 + sum2));
     }
+
       // Fit lam1
     for(int k = 0; k < K; k++){
       sum1 = 0;
@@ -213,6 +209,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
     }
     
     // Fit phi
+
       // Fit phi0
     for(int i = 0; i < N; i++){
       sum2 = 0;
@@ -221,6 +218,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       }
       phi0(i,g+1) = 1.0/R::rgamma((1+K)/2.0, 1.0/(1.0/w0(i,g+1) + sum2));
     }
+
       // Fit phi1
     for(int i = 0; i < N; i++){
       sum2 = 0;
@@ -230,8 +228,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       phi1(i,g+1) = 1.0/R::rgamma((1+K)/2.0, 1.0/(1.0/w1(i,g+1) + sum2));
     }
     
-    
-    
     // Fit alpha
     
     for(int i = 0; i < N; i++){
@@ -240,8 +236,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
         alpha1(i,k,g+1) = 1.0/R::rgamma(1.0, 1.0/(1.0 + 1.0/gamma1(i,k,g)));
       }
     }
-    
-    
+      
     // Fit gamma
     
     for(int i = 0; i < N; i++){
@@ -253,19 +248,16 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       }
     }
     
-    
     // Fit M
     
     mat QL(K,K);
     QL.zeros();
     QL.diag() = lam0.col(g+1) % lam1.col(g+1) * tau0[g+1] * tau1[g+1];
     L = (S.slice(g).t() * S.slice(g) + QL.i()).i(); 
-    // L = (S.slice(g).t() * S.slice(g) + diagmat(lam0.col(g+1) % lam1.col(g+1) * tau0[g+1] * tau1[g+1]).i()).i(); 
     for(int i = 0; i < p; i++){
       Me = L*(S.slice(g).t() * Y.row(i).t());
       M.slice(g+1).row(i) = (Me + sqrt(psi(i,g)) * (chol(L).t() * randn(K))).t();
     }
-    
     
     // Fit V
     
@@ -274,7 +266,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
     QB.zeros();
     QB.diag() = psi.col(g);
     B_const = M.slice(g+1).t() * QB.i() * M.slice(g+1);
-    // B_const = M.slice(g+1).t() * diagmat(psi.col(g)).i() * M.slice(g+1);
     mat QB2(K,K);
     QB2.zeros();
     
@@ -288,9 +279,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       QB2.diag() = phi1(i,g+1) * tau1[g+1] * lam1.col(g+1) % gamma1.slice(g+1).row(i).t();
       B_hinv = (B_const * sum1 + (QB2.i())).i(); 
       V1.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (QB.i()*C_h*D1inv.col(i))) + chol(B_hinv).t() * randn(K)).t();
-      // B_hinv = (B_const * sum1 + (diagmat(phi1(i,g+1) * tau1[g+1] * lam1.col(g+1) % gamma1.slice(g+1).row(i).t()).i())).i(); 
-      // V1.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (diagmat(psi.col(g)).i()*C_h*D1inv.col(i))) + chol(B_hinv).t() * randn(K)).t();
-     
+
       // Update C_const
       C_const = C_h - M.slice(g+1) * V1.slice(g+1).row(i).t() * D1inv.col(i).t();
       
@@ -299,9 +288,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       QB2.diag() = phi0(i,g+1) * tau0[g+1] * lam0.col(g+1) % gamma0.slice(g+1).row(i).t();
       B_hinv = (B_const + (QB2.i())).i(); 
       V0.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (QB.i()*C_h*D0.col(i))) + chol(B_hinv).t() * randn(K)).t();
-      // B_hinv = (B_const + (diagmat(phi0(i,g+1) * tau0[g+1] * lam0.col(g+1) % gamma0.slice(g+1).row(i).t()).i())).i(); 
-      // V0.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (diagmat(psi.col(g)).i()*C_h*D0.col(i))) + chol(B_hinv).t() * randn(K)).t();
-      
+
       // Update C_const
       C_const = C_h - M.slice(g+1) * V0.slice(g+1).row(i).t() * D0.col(i).t();
     }
@@ -318,7 +305,6 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
       Ei = Y.row(i) - theta.row(i);
       psi(i,g+1) = 1.0/R::rgamma(a_psi + N/2, 1.0/(b_psi + .5 * dot(Ei,Ei)));
     }
-    
     
   }
   
@@ -347,15 +333,7 @@ List CptCinit(mat Y, int K, int numiter, double a_psi, double b_psi, List init =
   
   return outList;
   
-  
-  
 }
-
-
-// You can include R code blocks in C++ files processed with sourceCpp
-// (useful for testing and development). The R code will be automatically 
-// run after the compilation.
-//
 
 
 /*** R

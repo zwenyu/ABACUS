@@ -16,6 +16,7 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 	int N = Y.n_cols;
 	
 	// make helper variables
+
 	double sum1;
 	double sum2;
 	mat L(K,K);
@@ -36,7 +37,6 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 	Ei.zeros();
 	
 	// Make and Initialize variables
-	
 	
 	vec tau(numiter);
 	vec xi(numiter);
@@ -64,7 +64,6 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 	V.slice(0).zeros();
 	psi.col(0).ones();
 
-	
 	// Make difference operator
 	
 	mat D(N,N);
@@ -74,7 +73,6 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 		vec subdiag(N-1);
 		subdiag.fill(-1);
 		D.diag(-1) -= 1;
-		// D = D + diagmat(subdiag,-1);
 	}else if(d==2){
 		vec subdiag(N-1);
 		vec subsubdiag(N-2);
@@ -82,11 +80,9 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 		subsubdiag.fill(1);
 		D.diag(-1) -= 2;
 		D.diag(-2) += 1;
-		// D = D + diagmat(subdiag,-1) + diagmat(subsubdiag,-2);
 	}
 	mat Dinv = D.i();
 	
-
 	// Iterate
 	
 	for(int g = 0; g < numiter - 1; g++){
@@ -151,7 +147,6 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 			}
 		}
 		
-		
 		// Fit gamma
 		
 		for(int i = 0; i < N; i++){
@@ -161,19 +156,16 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 			}
 		}
 		
-		
 		// Fit M
 		
 		mat QL(K,K);
 		QL.zeros();
 		QL.diag() = lam.col(g+1) * tau[g+1];
 		L = (S.slice(g).t() * S.slice(g) + QL.i()).i(); 
-		// L = (S.slice(g).t() * S.slice(g) + diagmat(lam.col(g+1) * tau[g+1]).i()).i(); 
 		for(int i = 0; i < p; i++){
 			Me = L*(S.slice(g).t() * Y.row(i).t());
 			M.slice(g+1).row(i) = (Me + sqrt(psi(i,g)) * (chol(L).t() * randn(K))).t();
-		}
-		
+		}		
 		
 		// Fit V
 		
@@ -182,7 +174,6 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 		QB.zeros();
 		QB.diag() = psi.col(g);
 		B_const = M.slice(g+1).t() * QB.i() * M.slice(g+1);
-		// B_const = M.slice(g+1).t() * diagmat(psi.col(g)).i() * M.slice(g+1);
 		mat QB2(K,K);
 		QB2.zeros();
 		
@@ -195,9 +186,7 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 			QB2.diag() = phi(i,g+1) * tau[g+1] * lam.col(g+1) % gamma.slice(g+1).row(i).t();
 			B_hinv = (B_const * sum1 + (QB2.i())).i(); 
 			V.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (QB.i()*C_h*Dinv.col(i))) + chol(B_hinv).t() * randn(K)).t();
-			// B_hinv = (B_const * sum1 + (diagmat(phi(i,g+1) * tau[g+1] * lam.col(g+1) % gamma.slice(g+1).row(i).t()).i())).i(); 
-			// V.slice(g+1).row(i) = (B_hinv * (M.slice(g+1).t() * (diagmat(psi.col(g)).i()*C_h*Dinv.col(i))) + chol(B_hinv).t() * randn(K)).t();
-			
+
 			// Update C_const
 			C_const = C_h - M.slice(g+1) * V.slice(g+1).row(i).t() * Dinv.col(i).t();
 		}
@@ -215,31 +204,22 @@ List CptC(mat Y, int K, int d, int numiter, double a_psi, double b_psi) {
 			psi(i,g+1) = 1.0/R::rgamma(a_psi + N/2.0, 1.0/(b_psi + .5 * dot(Ei,Ei)));
 		}
 		
-		
 	}
 	
 	return Rcpp::List::create(Rcpp::Named("tau") = tau,
-														Rcpp::Named("xi") = xi,
-														Rcpp::Named("lam") = lam,
-														Rcpp::Named("v") = v,
-														Rcpp::Named("phi") = phi,
-														Rcpp::Named("w") = w,
-														Rcpp::Named("gamma") = gamma,
-														Rcpp::Named("alpha") = alpha,
-														Rcpp::Named("M") = M,
-														Rcpp::Named("V") = V,
-														Rcpp::Named("S") = S,
-														Rcpp::Named("psi") = psi);
-	
-	
-	
+		Rcpp::Named("xi") = xi,
+		Rcpp::Named("lam") = lam,
+		Rcpp::Named("v") = v,
+		Rcpp::Named("phi") = phi,
+		Rcpp::Named("w") = w,
+		Rcpp::Named("gamma") = gamma,
+		Rcpp::Named("alpha") = alpha,
+		Rcpp::Named("M") = M,
+		Rcpp::Named("V") = V,
+		Rcpp::Named("S") = S,
+		Rcpp::Named("psi") = psi);
+		
 }
-
-
-// You can include R code blocks in C++ files processed with sourceCpp
-// (useful for testing and development). The R code will be automatically 
-// run after the compilation.
-//
 
 
 /*** R

@@ -1,7 +1,7 @@
 # R wrapper
 
 bsscpt = function(Y, K = 5, burn_in = 500, numiter = 3000, a.psi = 1, b.psi = 1){
-  # stage 1
+  # stage 1 with partial model
   output1 = 'error'
   attempt = 1
   while (class(output1) == 'character' && attempt <= 5){
@@ -12,7 +12,7 @@ bsscpt = function(Y, K = 5, burn_in = 500, numiter = 3000, a.psi = 1, b.psi = 1)
     })
     attempt = attempt + 1
   }
-  # stage 2 
+  # stage 2 with full model
   if (class(output1) != 'character'){
     output1ests = CptCEsts(output1, burn_in = burn_in)
     init = setInit_sps(output1ests)    
@@ -205,10 +205,10 @@ CptCinitEsts = function(output, burn_in){
   
 }
 
-# process results from runBSS with d = 1 for initialization
+# process results from partial model for initialization
 # cutoff for zero values of gest determined by kde
 setInit_sps = function(res1){
-  # res1 are results from runBSS with d = 1
+  # res1 are results from partial model
   
   gest = res1[['gest']]
   phiest = res1[['phiest']]
@@ -241,7 +241,7 @@ setInit_sps = function(res1){
   # locating possible change point locations
   index = which(gest_abs > cutoff)
   index_0 = which(gest_abs <= cutoff)
-  # index of possible anomalies
+  # index of possible additive outliers
   index_diff = index[which(diff(index) == 1)]
   index_anom = integer(0)
   i = 1
@@ -273,7 +273,7 @@ setInit_sps = function(res1){
   if (!is.null(index_conseq)){
     index_conseq = sort(unique(index_conseq))
   }
-  # index of possible mean changes
+  # index of possible level shifts
   index_mc = index[! index %in% index_conseq]
   
   # remove 1 since that's the starting value
@@ -320,26 +320,25 @@ setInit_sps = function(res1){
 }
 
 
-
-# dynamic programming to find optimal change points
+# dynamic programming to prune estimated change points
 # by sum of squared errors from mean
 prettycpt = function(S, cpt0, cpt1){
 
   # find points from cpt1
   N = ncol(S)
-  K = length(cpt1)
-  if (K <= 2){
+  Q = length(cpt1)
+  if (Q <= 2){
     cpt1_new = cpt1
   }else{
-    endloc = c(cpt1[2:K]-1, N)
-    sse_total = matrix(NA, K, K)
-    sse_right = matrix(NA, K, K) # saves sse on right of change point
-    cpt1_prev = matrix(NA, K, K) # saves previous change location
+    endloc = c(cpt1[2:Q]-1, N)
+    sse_total = matrix(NA, Q, Q)
+    sse_right = matrix(NA, Q, Q) # saves sse on right of change point
+    cpt1_prev = matrix(NA, Q, Q) # saves previous change location
     # iterate through each number of changes
-    for (k in 1:K){
-      if (k == 1){
+    for (q in 1:Q){
+      if (q == 1){
         # iterate through each ending location
-        for (n in 1:K){
+        for (n in 1:Q){
           # iterate through each candidate change location
           best_sse = Inf
           for (l in 0:(n-1)){ # l here is col position in sse_total
@@ -357,35 +356,35 @@ prettycpt = function(S, cpt0, cpt1){
               best_l = cpt1_l
             }
           }
-          sse_total[k, n] = best_sse
-          cpt1_prev[k, n] = best_l
+          sse_total[q, n] = best_sse
+          cpt1_prev[q, n] = best_l
         }      
       }else{
-        # k > 1 
+        # q > 1 
         # iterate through each ending location 
-        for (n in k:K){
+        for (n in q:Q){
           # iterate through each candidate change location
           best_sse = Inf
-          for (l in (k-1):(n-1)){ 
-            totalsse = sse_total[k-1, l] + sse_right[l, n]
+          for (l in (q-1):(n-1)){ 
+            totalsse = sse_total[q-1, l] + sse_right[l, n]
             if (totalsse < best_sse){
               best_sse = totalsse
               best_l = l
             }          
           }
-          sse_total[k, n] = best_sse
-          cpt1_prev[k, n] = best_l
+          sse_total[q, n] = best_sse
+          cpt1_prev[q, n] = best_l
         }
       }
     }
     # pick change points with mean difference of sse as threshold
-    thresh = mean(diff(sse_total[,K]))
-    kest = max(which(diff(sse_total[,K]) <= thresh)) + 1
-    colnum = cpt1_prev[kest, K]
+    thresh = mean(diff(sse_total[,Q]))
+    qest = max(which(diff(sse_total[,Q]) <= thresh)) + 1
+    colnum = cpt1_prev[qest, Q]
     cpt1_new = endloc[colnum] + 1
-    if (kest > 2){
-      for (k in (kest-1):2){
-        colnum = cpt1_prev[k, colnum]
+    if (qest > 2){
+      for (q in (qest-1):2){
+        colnum = cpt1_prev[q, colnum]
         cpt1_new = c(endloc[colnum]+1, cpt1_new)
       }      
     }
